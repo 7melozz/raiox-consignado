@@ -1,0 +1,30 @@
+
+---
+
+## 📌 Código final para `scripts/gerar_raiox.py`
+```python
+import pandas as pd
+
+# Carregar dados
+df = pd.read_csv("data/esteira.csv", sep=";")
+df = df[["Data/Hora", "Status", "Agente", "Saldo Devedor"]]
+
+# Ajustar datas
+df["Data/Hora"] = pd.to_datetime(df["Data/Hora"], dayfirst=True, errors="coerce")
+
+# Ajustar valores monetários
+df["Saldo Devedor"] = (
+    df["Saldo Devedor"]
+    .str.replace("R$", "")
+    .str.replace(".", "")
+    .str.replace(",", ".")
+    .astype(float)
+)
+
+# Agrupar dados
+grouped = df.groupby(["Agente", "Data/Hora", "Status"])["Saldo Devedor"].sum().reset_index()
+
+# Exportar para Excel
+with pd.ExcelWriter("output/retorno.xlsx") as writer:
+    df.to_excel(writer, sheet_name="Dados Brutos", index=False)
+    grouped.to_excel(writer, sheet_name="Grouped", index=False)
